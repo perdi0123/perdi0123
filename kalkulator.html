@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Trading Calculator</title>
+    <style type="text/css">
+        /* General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+
+        .calculator {
+            background-color: #2a2a72;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .calculator:hover {
+            transform: translateY(-10px);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+            color: #f0f0f0;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            font-size: 14px;
+            color: #d1d1f0;
+        }
+
+        /* Leverage Slider */
+        #leverage {
+            width: 100%;
+            margin-top: 5px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: #3a3a95;
+            color: #f0f0f0;
+            outline: none;
+            transition: background-color 0.3s;
+        }
+
+        input:focus {
+            background-color: #4a4aa5;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #ff6a00, #ee0979);
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #ee0979, #ff6a00);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .output {
+            margin-top: 20px;
+        }
+
+        .output p {
+            margin: 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        #minusUsdt, #pnlMinus {
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .red {
+            color: red;
+        }
+
+        .green {
+            color: green;
+        }
+
+        /* Powered by KodeBandar Styles */
+        .powered-by {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .powered-by a {
+            color: #ff6a00;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+
+        .powered-by a:hover {
+            color: #ff8500;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1>Risk Trading Calculator</h1>
+
+        <!-- Leverage Slider -->
+        <div class="input-group">
+            <label for="leverage">Leverage: <span id="leverageValue">15x</span></label>
+            <input type="range" id="leverage" min="1" max="125" value="15" oninput="updateLeverageValue()">
+        </div>
+
+        <div class="input-group">
+            <label for="entryPrice">Entry Price:</label>
+            <input type="number" id="entryPrice" placeholder="Enter entry price" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label for="stopLoss">Stop Loss Price:</label>
+            <input type="number" id="stopLoss" placeholder="Enter stop loss price" step="0.01">
+        </div>
+
+        <div class="input-group">
+            <label for="positionSize">Position Size:</label>
+            <input type="number" id="positionSize" placeholder="Enter position size" step="0.01">
+        </div>
+
+        <button onclick="calculateRisk()">Calculate</button>
+
+        <!-- Informasi Trade Type (Long/Short) akan muncul di sini -->
+        <div class="output">
+            <p id="tradeTypeInfo">Trade Type: </p> <!-- Info Long/Short akan muncul di sini -->
+            <p id="minusUsdt">USDT: </p>
+            <p id="pnlMinus">PNL: </p>
+        </div>
+
+        <div class="powered-by">
+            <p>Powered by <a href="https://t.me/kodebandar">KodeBandar</a></p>
+        </div>
+    </div>
+
+    <script>
+        function updateLeverageValue() {
+            // Mengupdate nilai leverage yang ditampilkan di sebelah slider
+            document.getElementById("leverageValue").innerText = document.getElementById("leverage").value + 'x';
+        }
+
+        function calculateRisk() {
+            // Mengambil nilai dari form
+            const leverage = parseFloat(document.getElementById("leverage").value);
+            const entryPrice = parseFloat(document.getElementById("entryPrice").value);
+            const stopLoss = parseFloat(document.getElementById("stopLoss").value);
+            const positionSize = parseFloat(document.getElementById("positionSize").value);
+
+            // Validasi input
+            if (isNaN(leverage) || isNaN(entryPrice) || isNaN(stopLoss) || isNaN(positionSize) || entryPrice <= 0 || stopLoss <= 0 || positionSize <= 0) {
+                alert("Masukkan nilai yang valid.");
+                return;
+            }
+
+            // Tentukan apakah itu Long atau Short berdasarkan harga stop loss dan entry
+            let tradeType;
+            let minusAmount;
+            let pnlMinus;
+
+            if (stopLoss > entryPrice) {
+                tradeType = "Short";
+                minusAmount = -Math.abs((entryPrice - stopLoss) * positionSize * leverage);
+                pnlMinus = ((minusAmount / (entryPrice * positionSize * leverage)) * 100).toFixed(2);
+                
+                // Set warna merah untuk short
+                document.getElementById("minusUsdt").classList.add("red");
+                document.getElementById("pnlMinus").classList.add("red");
+                document.getElementById("minusUsdt").classList.remove("green");
+                document.getElementById("pnlMinus").classList.remove("green");
+
+            } else if (stopLoss < entryPrice) {
+                tradeType = "Long";
+                minusAmount = Math.abs((entryPrice - stopLoss) * positionSize * leverage);
+                pnlMinus = ((minusAmount / (entryPrice * positionSize * leverage)) * 100).toFixed(2);
+
+                // Set warna hijau untuk long
+                document.getElementById("minusUsdt").classList.add("green");
+                document.getElementById("pnlMinus").classList.add("green");
+                document.getElementById("minusUsdt").classList.remove("red");
+                document.getElementById("pnlMinus").classList.remove("red");
+
+            } else {
+                tradeType = "Invalid"; // Jika stop loss sama dengan entry, kasus tak valid
+                minusAmount = 0;
+                pnlMinus = 0;
+            }
+
+            // Menampilkan hasil kalkulasi
+            document.getElementById("tradeTypeInfo").innerHTML = `Trade Type: ${tradeType}`;
+            document.getElementById("minusUsdt").innerHTML = `${tradeType === "Short" ? "-" : "+"}${Math.abs(minusAmount).toFixed(2)} USDT`;
+            document.getElementById("pnlMinus").innerHTML = `PNL ${tradeType === "Short" ? "-" : "+"}${Math.abs(pnlMinus)} %`;
+        }
+    </script>
+</body>
+</html>
